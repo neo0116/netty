@@ -37,11 +37,13 @@ public class ConsumerProxy {
                 myProtocol.setArgs(args);
 
                 ConsumerHandler consumerHandler = new ConsumerHandler();
+
                 EventLoopGroup loopGroup = new NioEventLoopGroup();
                 try {
                     Bootstrap bootstrap = new Bootstrap();
                     bootstrap.group(loopGroup)
                             .channel(NioSocketChannel.class)
+                            .option(ChannelOption.TCP_NODELAY, true)
                             .handler(new ChannelInitializer<SocketChannel>() {
                                 @Override
                                 protected void initChannel(SocketChannel ch) throws Exception {
@@ -55,8 +57,7 @@ public class ConsumerProxy {
                                     pipeline.addLast("decoder", new ObjectDecoder(Integer.MAX_VALUE, ClassResolvers.cacheDisabled(null)));
                                     pipeline.addLast("handler", consumerHandler);
                                 }
-                            })
-                            .option(ChannelOption.TCP_NODELAY, true);
+                            });
                     ChannelFuture future = bootstrap.connect("localhost", 8080).sync();
                     future.channel().writeAndFlush(myProtocol).sync();
                     future.channel().closeFuture().sync();
